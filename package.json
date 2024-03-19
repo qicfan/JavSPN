@@ -1,17 +1,14 @@
 {
-  "name": "jav",
-  "version": "0.0.0",
+  "name": "javspn",
+  "version": "0.0.1",
+  "description": "",
+  "author": "dean <qicfan@gmail.com>",
   "private": true,
   "type": "module",
-  "main": "electron/main.js",
+  "main": "electron/main.mjs",
   "scripts": {
-    "electron:dev": "concurrently vite \"electron .\"",
-    "dev": "vite",
-    "build": "run-p type-check \"build-only {@}\" --",
-    "preview": "vite preview",
-    "test:unit": "vitest",
-    "build-only": "vite build",
-    "type-check": "vue-tsc --build --force",
+    "dev": "concurrently vite \"electron .\"",
+    "build": "vue-tsc --noEmit && vite build && electron-builder",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
     "format": "prettier --write src/"
   },
@@ -43,5 +40,46 @@
     "vite": "^5.0.11",
     "vitest": "^1.2.2",
     "vue-tsc": "^1.8.27"
+  },
+  "build": {
+    "appId": "me.dean.javspn",
+    "asar": true,
+    "productName": "JavSPN",
+    "directories": {
+      "output": "release/${version}"
+    },
+    "files": [
+      "dist",
+      "electron"
+    ],
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "artifactName": "${productName}-Mac-${version}-Installer.${ext}"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "${productName}-Windows-${version}-Setup.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "deleteAppDataOnUninstall": false
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "artifactName": "${productName}-Linux-${version}.${ext}"
+    }
   }
 }
