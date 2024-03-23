@@ -1,3 +1,17 @@
 {
-    
+  "UpdateMedia": "Scan",
+  "Fetch": "Scrape",
+  "RenameFiles": "Rename",
+  "Setting": "Settings",
+  "CheckUpdate": "Check Update",
+  "EmptyLibraryPath": "First using? Please set up a library first. You can add or modify it in the settings later.",
+  "FirstChooseLibraryPath": "Congratulations on selecting a library directory, please click",
+  "Button": "Button",
+  "ChooseDirectory": "Choose Directory",
+  "InitLoadingText": "Init Loading...",
+  "NoCode": "Unrecognized DVD id",
+  "IgnoreDataItem": "Ignore",
+  "EditCode": "Edit DVD Id",
+  "IgnoreDesc": "Not a video? It will not in the list again during the next scan.",
+  "OPSaveLibraryData": "Save Data"
 }

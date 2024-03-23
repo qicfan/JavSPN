@@ -1,4 +1,17 @@
 {
-    "Home": "主页",
-    "About": "关于"
+  "UpdateMedia": "扫描媒体库",
+  "Scrape": "刮削",
+  "RenameFiles": "重命名",
+  "Setting": "设置",
+  "CheckUpdate": "检查更新",
+  "EmptyLibraryPath": "第一次使用？请先设置一个媒体库吧，后续可以在设置中添加或者修改。",
+  "FirstChooseLibraryPath": "恭喜您选择了一个媒体库目录，请点击顶部的",
+  "Button": "按钮",
+  "ChooseDirectory": "选择目录",
+  "InitLoadingText": "正在初始化...",
+  "NoCode": "未识别番号",
+  "IgnoreDataItem": "忽略",
+  "EditCode": "编辑番号",
+  "IgnoreDesc": "可能非影片，忽略后下次扫描不会再出现在列表中",
+  "OPSaveLibraryData": "保存媒体库"
 }

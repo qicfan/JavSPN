@@ -1,18 +1,22 @@
+import { isString } from 'element-plus/es/utils/types.mjs'
 import { nextTick } from 'vue'
 import { createI18n, type I18n } from 'vue-i18n'
-import defaultSetting from './setttings'
 
 const SUPPORT_LOCALES = ['en', 'zh-cn']
 
 const i18n = createI18n({
-    legacy: false,
-    globalInjection: true,
-    locale: defaultSetting.language
+  legacy: false,
+  globalInjection: true,
+  locale: 'zh-cn'
 })
 
-function setI18nLanguage(i18n: I18n, locale: string) {
+function setI18nLanguage(i18n: I18n, locale: any) {
+  if (isString(i18n.global.locale)) {
     i18n.global.locale = locale
-    loadLocaleMessages(i18n, locale)
+  } else {
+    i18n.global.locale.value = locale
+  }
+  loadLocaleMessages(i18n, locale)
 }
 
 async function loadLocaleMessages(i18n: I18n, locale: string) {
@@ -27,4 +31,4 @@ async function loadLocaleMessages(i18n: I18n, locale: string) {
   return nextTick()
 }
 
-export  {i18n, setI18nLanguage, SUPPORT_LOCALES}
+export { i18n, setI18nLanguage, SUPPORT_LOCALES }

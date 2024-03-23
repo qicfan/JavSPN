@@ -29,3 +29,9 @@ coverage
 *.sw?
 
 *.tsbuildinfo
+JavSP.exe
+tmp.txt
+tmp.json
+package-lock.json
+package-lock.json
+resources/JavSP/config.ini
