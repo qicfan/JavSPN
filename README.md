@@ -34,3 +34,7 @@ npm run dev
 ```
 npm run build
 ```
+
+### 界面预览
+![微信图片_20240324223124](https://github.com/qicfan/JavSPN/assets/758655/de8f4e88-1d90-43f5-b030-f7c3ad987045)
+![微信图片_20240324223213](https://github.com/qicfan/JavSPN/assets/758655/ae3378ae-7196-4746-a298-c76f54222154)
