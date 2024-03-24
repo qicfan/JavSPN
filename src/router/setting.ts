@@ -2,6 +2,7 @@ import { createRouter, createWebHashHistory } from 'vue-router'
 import Library from '../views/settings/library.vue'
 import Network from '@/views/settings/network.vue'
 import File from '@/views/settings/file.vue'
+import Translate from '@/views/settings/translate.vue'
 
 const router = createRouter({
   history: createWebHashHistory(import.meta.env.BASE_URL),
@@ -21,6 +22,10 @@ const router = createRouter({
     {
       path: '/file',
       component: File
+    },
+    {
+      path: '/translate',
+      component: Translate
     }
   ]
 })

@@ -7,7 +7,7 @@ const libraryStore = useLibraryStore()
 </script>
 
 <template>
-  <div class="main-body" v-if="app.libraryPath.length > 0 && app.firstChoosedDir == 2">
+  <div class="main-body" v-if="app.libraryPath.length && libraryStore.libraryListIds.length > 0">
     <transition-group name="list" tag="div">
       <el-space wrap size="large" style="width: 100%">
         <DataItem
@@ -18,14 +18,17 @@ const libraryStore = useLibraryStore()
       </el-space>
     </transition-group>
   </div>
-  <div class="first" v-if="!app.libraryPath.length || app.firstChoosedDir < 2">
-    <p style="width: 100%; text-align: center" v-if="app.firstChoosedDir == 0">
+  <div class="first" v-if="!app.libraryPath.length || !libraryStore.libraryListIds.length">
+    <p style="width: 100%; text-align: center" v-if="!app.libraryPath.length">
       {{ $t('EmptyLibraryPath') }}
     </p>
-    <p style="width: 100%; text-align: center" v-if="app.firstChoosedDir == 1">
+    <p
+      style="width: 100%; text-align: center"
+      v-if="app.libraryPath.length && !libraryStore.libraryListIds.length"
+    >
       {{ $t('FirstChooseLibraryPath') }} {{ $t('UpdateMedia') }} {{ $t('Button') }}
     </p>
-    <p style="width: 100%; text-align: center" v-if="app.firstChoosedDir == 0">
+    <p style="width: 100%; text-align: center" v-if="!app.libraryPath.length">
       <el-button type="primary" @click="app.chooseDirectory(true)">{{
         $t('ChooseDirectory')
       }}</el-button>

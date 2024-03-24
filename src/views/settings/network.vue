@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { reactive } from 'vue'
 import { useSettingStore } from '../../stores/setting'
+import { ElMessage } from 'element-plus'
+import { i18n } from '@/i18n'
 
 const settingStore = useSettingStore()
 
@@ -18,8 +20,8 @@ const onSubmit = () => {
     timeout: form.timeout
   }
   settingStore.settings.Network = network
-  settingStore.saveInit().then((r: any) => {
-    console.log(r)
+  settingStore.saveInit().then(() => {
+    ElMessage.success(i18n.global.t('SaveSuccess'))
   })
 }
 </script>
@@ -37,7 +39,7 @@ const onSubmit = () => {
           <el-switch v-model="form.use_proxy" />
         </el-form-item>
         <el-alert type="info" :closable="false">
-          <p>支持 http, socks5/socks5h，如: http://192.168.1.1:1080; socks5://192.168.1.1:1081</p>
+          <p>{{ $t('ProxyHelp') }}</p>
         </el-alert>
         <el-form-item :label="$t('Proxy')" v-if="form.use_proxy">
           <el-input v-model="form.proxy" />

@@ -224,6 +224,7 @@ async function createSettingWindow() {
     title: '设置',
     minWidth: 600,
     minHeight: 600,
+    icon: path.join(__dirname, '../public/icon.png'),
     webPreferences: {
       sandbox: false,
       preload: path.join(__dirname, './preload.mjs')

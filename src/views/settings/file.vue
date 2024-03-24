@@ -57,18 +57,18 @@ const addExt = () => {
     <el-card style="max-width: 90%">
       <template #header>
         <div class="card-header">
-          <span>{{ $t('Network') }}</span>
+          <span>{{ $t('File') }}</span>
         </div>
       </template>
       <el-form :model="form" label-width="auto" style="max-width: 600px">
         <el-alert type="info" :closable="false">
-          <p>不允许修改。整理文件的逻辑由JavSPN接管</p>
+          <p>{{ $t('EnableFileMoveHelp') }}</p>
         </el-alert>
         <el-form-item :label="$t('EnableFileMove')">
           <el-switch v-model="form.enable_file_move" :disabled="true" />
         </el-form-item>
         <el-alert type="info" :closable="false">
-          <p>哪些扩展名的文件会被视为影片，开头不用加点</p>
+          <p>{{ $t('MediaExtHelp') }}</p>
         </el-alert>
         <el-form-item :label="$t('MediaExt')">
           <div class="exts">
@@ -109,15 +109,15 @@ const addExt = () => {
           </div>
         </el-form-item>
         <el-alert type="info" :closable="false">
-          <p>扫描影片文件时忽略指定的文件夹（以.开头的文件夹不需要设置也会被忽略），分号分隔</p>
+          <p>{{ $t('IgnoreFolderHelp') }}</p>
         </el-alert>
         <el-form-item :label="$t('IgnoreFolder')" v-if="form.ignore_folder">
           <el-input v-model="form.ignore_folder" />
         </el-form-item>
         <el-alert type="info" :closable="false">
-          <p>匹配番号时忽略小于指定大小的文件（以MiB为单位，0表示禁用此功能）</p>
+          <p>{{ $t('IgnoreFileSizeHelp') }}</p>
         </el-alert>
-        <el-form-item :label="$t('IgnoreFolder')" v-if="form.ignore_video_file_less_than">
+        <el-form-item :label="$t('IgnoreFileSize')" v-if="form.ignore_video_file_less_than">
           <el-input-number v-model="form.ignore_video_file_less_than" :min="0" />
         </el-form-item>
         <el-form-item>

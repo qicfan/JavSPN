@@ -30,12 +30,12 @@ settingStore.loadIni()
         <el-menu-item index="/translate">
           <span>{{ $t('Translate') }}</span>
         </el-menu-item>
-        <el-menu-item index="/naming">
+        <!-- <el-menu-item index="/naming">
           <span>{{ $t('NamingRule') }}</span>
         </el-menu-item>
         <el-menu-item index="/other">
           <span>{{ $t('Other') }}</span>
-        </el-menu-item>
+        </el-menu-item> -->
       </el-menu>
       <!-- <h5 class="mb-2">JavSP</h5>
       <el-menu
