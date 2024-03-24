@@ -1,40 +1,39 @@
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { ref, type Ref } from 'vue'
 import { useLibraryStore } from '../stores/library'
 
 const props = defineProps(['data'])
 
 const libraryStore = useLibraryStore()
 
-const itemBackgroundColor = '#fff'
-const itemEnBackgroundColor = '#f4f7f8'
-const itemSelectedBackgroundColor = '#efeae8'
-
-const selected = ref(false)
-
-const styleObject = reactive({
-  backgroundColor: itemBackgroundColor
-})
-
 const editing = ref(false)
 const code = ref('')
-
-const mouseen = () => {
-  if (!selected.value) {
-    styleObject.backgroundColor = itemEnBackgroundColor
-  }
+const isOk = ref(!!props.data.nfo)
+const needEditCode = ref(props.data.code == '无法识别番号')
+const showDetail = ref(false)
+const detailLoading = ref(false)
+const defaultNfo: MovieNfo = {
+  title: '',
+  originaltitle: '',
+  rating: '0',
+  plot: '',
+  runtime: '',
+  genre: [],
+  tag: [],
+  country: '',
+  premiered: '',
+  studio: '',
+  actor: []
 }
+const nfoData = ref(defaultNfo)
 
-const mouseout = () => {
-  if (!selected.value) {
-    styleObject.backgroundColor = itemBackgroundColor
-  }
-}
+const rate = ref(0)
 
-const select = () => {
-  selected.value = !selected.value
-  if (selected.value) {
-    styleObject.backgroundColor = itemSelectedBackgroundColor
+const select = () => {}
+
+const click = () => {
+  if (needEditCode.value) {
+    return edit()
   }
 }
 
@@ -51,80 +50,170 @@ const saveCode = () => {
   libraryStore.saveCode(props.data.id, code.value)
   editing.value = false
 }
+
+const detail = async () => {
+  showDetail.value = true
+  // 加载nfo数据，如果已经刮削过的话
+  if (!isOk.value) return
+  detailLoading.value = true
+  const nfoJsonString = await window.electronAPI.LoadNfo(props.data.nfo)
+  const nfo: { movie: MovieNfo } = JSON.parse(nfoJsonString)
+  nfoData.value = nfo.movie
+  rate.value = (parseFloat(nfo.movie.rating) / 10) * 5
+  detailLoading.value = false
+  return
+}
 </script>
 <style scoped>
 .item {
+  width: 185px;
+  --el-card-padding: 0;
+}
+
+.poster {
+  width: 100%;
+  height: 170px;
+  cursor: pointer;
+}
+
+.card-header {
+  padding: 4px 10px;
+  display: flex;
+  justify-content: space-between;
+}
+.el-card__body {
   position: relative;
-  padding: 5px;
-  border-bottom: 1px solid #ccc;
 }
-.item-p {
-  display: flex;
-  justify-content: start;
-  align-items: center;
-}
-
-.item-code {
-  font-weight: bold;
-  margin-right: 10px;
-}
-
-.item-p .el-tag {
-  margin-right: 6px;
-}
-
-.item .status-icon {
+.el-card__body .status-icon {
   position: absolute;
-  top: 0;
-  right: 10px;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  bottom: 0;
+  right: 2px;
+}
+.icon-btn {
+  cursor: pointer;
+}
+.el-tag + .el-tag {
+  margin-left: 10px;
 }
 </style>
 
 <template>
-  <div
-    class="item"
-    :style="styleObject"
-    @click="select"
-    @mouseenter="mouseen"
-    @mouseleave="mouseout"
-    v-loading="data.loading"
-  >
-    <p class="item-p">
-      <el-text v-if="!editing" size="large" class="mx-1 item-code">
-        {{ !data.code || data.code == '无法识别番号' ? $t('NoCode') : data.code }}
-      </el-text>
-      <span v-if="editing">
-        <el-input v-model="code" style="width: 80px" />
-        <el-button size="small" @click.stop="saveCode">保存</el-button>
-      </span>
-      <template v-if="!editing">
-        <el-button @click.stop="ignore" size="small" v-if="!data.nfo">
-          {{ $t('IgnoreDataItem') }} <el-icon><Warning /></el-icon>
-        </el-button>
-        <el-button
-          @click.stop="edit"
-          size="small"
-          type="warning"
-          v-if="data.code == '无法识别番号'"
-        >
-          {{ $t('EditCode') }}
-        </el-button>
-        <!-- <el-tag size="small" type="primary">中文字幕</el-tag>
-        <el-tag size="small" type="primary">有码</el-tag> -->
-      </template>
-    </p>
-    <p>
-      <el-text class="mx-1" line-clamp="1">{{ data.name }}</el-text>
-    </p>
-    <div class="status-icon">
-      <el-icon color="green" v-if="data.nfo"><SuccessFilled /></el-icon>
-      <el-icon color="red" v-if="!data.code || data.code == '无法识别番号'"
-        ><WarningFilled
-      /></el-icon>
+  <el-card class="item" @click.stop="select" v-loading="data.loading" shadow="hover">
+    <template #header>
+      <div class="card-header">
+        <el-link size="large" tag="b" v-if="!editing" @click.stop="click"
+          >{{ data.code == '无法识别番号' ? $t('NoCode') : data.code }}
+          <el-icon color="red" class="el-icon--right" v-if="needEditCode"><Edit /></el-icon>
+          <el-icon class="el-icon--right" v-if="!needEditCode"><View /></el-icon>
+        </el-link>
+        <div v-if="editing">
+          <el-input size="small" v-model="code" style="width: 80px" placeholder="ADN-001" />
+          <el-button class="el-icon--right" size="small" @click.stop="saveCode" type="primary">
+            <el-icon><Check /></el-icon>
+          </el-button>
+          <el-button
+            size="small"
+            @click.stop="editing = false"
+            type="danger"
+            style="margin-left: 4px"
+          >
+            <el-icon><Close /></el-icon>
+          </el-button>
+        </div>
+        <el-dropdown v-if="!editing && !isOk" trigger="click">
+          <el-icon class="icon-btn"><MoreFilled /></el-icon>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item @click.stop="ignore">{{ $t('IgnoreDataItem') }}</el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
+      </div>
+    </template>
+    <div style="position: relative" @click.stop="detail">
+      <el-image class="poster" fit="contain" :src="data.poster"></el-image>
+      <div class="status-icon">
+        <el-icon color="green" v-if="isOk"><SuccessFilled /></el-icon>
+      </div>
     </div>
-  </div>
+  </el-card>
+  <el-dialog v-model="showDetail" :title="data.code" width="90%">
+    <div v-if="detailLoading">
+      <el-skeleton animated>
+        <template #template>
+          <el-skeleton-item variant="text" />
+          <el-skeleton-item variant="text" />
+          <el-skeleton-item variant="text" />
+          <el-skeleton-item variant="text" />
+          <el-row :gutter="20">
+            <el-col :span="12">
+              <el-skeleton-item variant="image" style="width: 140px; height: 200px" />
+            </el-col>
+            <el-col :span="12">
+              <el-skeleton-item variant="image" style="width: 200px; height: 140px" />
+            </el-col>
+          </el-row>
+        </template>
+      </el-skeleton>
+    </div>
+    <div v-if="!detailLoading">
+      <el-descriptions :title="nfoData.title ? nfoData.title : data.name" :column="3" border>
+        <el-descriptions-item :label="$t('OriginalTitle')" :span="3">
+          {{ nfoData.originaltitle }}
+        </el-descriptions-item>
+        <el-descriptions-item :label="$t('Country')"> {{ nfoData.country }} </el-descriptions-item>
+        <el-descriptions-item :label="$t('Premiered')">
+          {{ nfoData.premiered }}
+        </el-descriptions-item>
+        <el-descriptions-item :label="$t('Rating')">
+          <el-rate v-model="rate" disabled text-color="#ff9900" />
+        </el-descriptions-item>
+        <el-descriptions-item :label="$t('Studio')"> {{ nfoData.studio }} </el-descriptions-item>
+        <el-descriptions-item :label="$t('Director')">
+          {{ nfoData.director }}
+        </el-descriptions-item>
+        <el-descriptions-item :label="$t('Runtime')"> {{ nfoData.runtime }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('Description')" :span="3" width="80">
+          {{ nfoData.plot }}
+        </el-descriptions-item>
+        <el-descriptions-item :label="$t('Actor')" :span="3">
+          <el-tag
+            size="large"
+            effect="dark"
+            type="primary"
+            v-for="a in nfoData.actor"
+            :key="a.name"
+          >
+            {{ a.name }}
+          </el-tag>
+        </el-descriptions-item>
+        <el-descriptions-item :label="$t('Tag')" :span="3">
+          <el-tag effect="plain" size="small" v-for="t in nfoData.tag" :key="t">
+            {{ t }}
+          </el-tag>
+        </el-descriptions-item>
+        <el-descriptions-item :label="$t('Files')" :span="3">
+          <div v-for="p in data.files" :key="p">{{ p }}</div>
+        </el-descriptions-item>
+        <el-descriptions-item :label="$t('Poster')" :span="3">
+          <div>{{ data.poster }}</div>
+          <el-image
+            style="width: 150px"
+            :src="data.poster"
+            fill="container"
+            :preview-src-list="[data.poster]"
+          />
+        </el-descriptions-item>
+        <el-descriptions-item :label="$t('Fanart')" :span="3">
+          <div>{{ data.fanart }}</div>
+          <el-image
+            style="width: 300px"
+            :src="data.fanart"
+            fill="container"
+            :preview-src-list="[data.fanart]"
+          />
+        </el-descriptions-item>
+      </el-descriptions>
+    </div>
+  </el-dialog>
 </template>

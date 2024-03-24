@@ -9,6 +9,7 @@ interface Window {
     scan(string)
     onScanFinish(callback: scanCallback)
     loadIni()
+    saveIni(obj: any)
     onLoadIniFinish(callback: scanCallback)
     loadLibraryData()
     onLoadLibraryDataFinish(callback: scanCallback)
@@ -16,6 +17,9 @@ interface Window {
     onSrapeFinish(callback: scanCallback)
     saveLibraryData(items: string)
     openSetting()
+    LoadNfo(path: string)
+    editLibraryPath()
+    onEditLibraryPath(callback: scanCallback)
   }
 }
 
@@ -48,3 +52,18 @@ type DataItem = {
   id: string // 由code和file_path组合后生成md5，文件被移动后重新生成；用来去重。
 }
 type DataItemDict = { [key: string]: DataItem }
+
+interface MovieNfo {
+  title: string
+  originaltitle: string
+  rating: string
+  plot: string
+  runtime: string
+  genre: string[]
+  tag: string[]
+  country: string
+  premiered: string
+  studio: string
+  actor: { name: string }[]
+  [key: string]: any
+}

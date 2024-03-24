@@ -8,16 +8,15 @@ const libraryStore = useLibraryStore()
 
 <template>
   <div class="main-body" v-if="app.libraryPath.length > 0 && app.firstChoosedDir == 2">
-    <el-scrollbar class="items" :style="{ width: app.listWidthPercent + '%' }">
-      <transition-group name="list" tag="div">
+    <transition-group name="list" tag="div">
+      <el-space wrap size="large" style="width: 100%">
         <DataItem
           v-for="id in libraryStore.libraryListIds"
           v-bind:key="id"
           :data="libraryStore.libraryData[id]"
         />
-      </transition-group>
-    </el-scrollbar>
-    <div class="detail" :style="{ width: 1 - app.listWidthPercent + '%' }"></div>
+      </el-space>
+    </transition-group>
   </div>
   <div class="first" v-if="!app.libraryPath.length || app.firstChoosedDir < 2">
     <p style="width: 100%; text-align: center" v-if="app.firstChoosedDir == 0">
@@ -36,15 +35,8 @@ const libraryStore = useLibraryStore()
 <style scoped>
 .main-body,
 .first {
-  height: calc(100vh - 130px);
-  overflow: auto;
-}
-.detail {
-  height: calc(100vh - 130px);
-  overflow: auto;
-}
-.main-body {
-  display: flex;
+  padding: 10px;
+  width: calc(100vw - 20px);
 }
 
 .first {

@@ -1,11 +1,11 @@
-import { app, BrowserWindow, BrowserView, Menu, ipcMain, dialog } from 'electron'
+import { app, BrowserWindow, Menu, ipcMain, dialog } from 'electron'
 import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { exec } from 'node:child_process'
 import fs from 'node:fs'
-import ini from 'ini'
 import crypto from 'node:crypto'
+import xml2json from 'xml2json'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -43,11 +43,59 @@ async function handleFileOpen() {
   return ''
 }
 
+function parseIni(iniString) {
+  const lines = iniString.split('\r\n')
+  const ini = {}
+  let dictName = ''
+  for (const idx in lines) {
+    const line = lines[idx]
+    // 注释，跳过
+    if (line == '') continue
+    if (line.startsWith('#')) continue
+    if (line.startsWith('[')) {
+      // 一个小节，对应一个字典
+      dictName = line.replace('[', '').replace(']', '').trim()
+      ini[dictName] = {}
+      continue
+    }
+    // 用等号分割
+    const tmpStr = line.split('=')
+    const key = tmpStr[0].trim()
+    const value = tmpStr[1].trim()
+    ini[dictName][key] = value
+  }
+  return ini
+}
+
+function dumpIni(iniObject) {
+  const lines = []
+  for (const dictName in iniObject) {
+    lines.push(`[${dictName}]`)
+    for (const key in iniObject[dictName]) {
+      const value = iniObject[dictName][key]
+      lines.push(`${key} = ${value}`)
+    }
+  }
+  return lines.join('\r\n')
+}
+
 // 读取配置文件
-async function loadIni() {
+function loadIni() {
   const iniFile = path.join(javSPPath, './config.ini')
-  const config = ini.parse(fs.readFileSync(iniFile, 'utf-8'))
-  win.webContents.send('load-ini-finish', config)
+  let iniData = fs.readFileSync(iniFile, 'utf-8')
+  const config = parseIni(iniData)
+  return new Promise((rs) => {
+    rs(config)
+  })
+}
+
+function saveIni(data) {
+  const iniFile = path.join(javSPPath, './config.ini')
+  const iniData = dumpIni(JSON.parse(data))
+  fs.writeFileSync(iniFile, iniData, 'utf-8')
+  return new Promise((rs) => {
+    rs(true)
+  })
 }
 
 // 读取媒体库数据
@@ -68,6 +116,18 @@ async function loadLibraryData() {
   })
 }
 
+function checkFile(filename, suffix, name) {
+  const baseName = path.basename(filename, path.extname(filename))
+  const baseDir = path.dirname(filename)
+  const aName = path.join(baseDir, baseName) + suffix
+  const bName = path.join(baseDir, name)
+  const aE = fs.existsSync(aName)
+  const bE = fs.existsSync(bName)
+  if (aE) return aName
+  if (bE) return bName
+  return ''
+}
+
 function scan(libraryPath) {
   const javSP = path.join(javSPPath, './JavSP.exe')
   const dataCacheFile = path.join(appPath, './tmp.json')
@@ -76,7 +136,16 @@ function scan(libraryPath) {
     // 读取缓存文件
     fs.readFile(dataCacheFile, { encoding: 'utf-8' }, (err, data) => {
       if (!data) return
-      return win.webContents.send('scan-finish', JSON.parse(data))
+      const movies = JSON.parse(data)
+      // 识别是否有Nfo，poster，fanart
+      const l = movies.length
+      for (let i = 0; i < l; i++) {
+        const file = movies[i].files[0]
+        movies[i].nfo_file = checkFile(file, '.nfo', 'movie.nfo')
+        movies[i].poster_file = checkFile(file, '-poster.jpg', 'poster.jpg')
+        movies[i].fanart_file = checkFile(file, '-fanart.jpg', 'fanart.jpg')
+      }
+      return win.webContents.send('scan-finish', movies)
     })
   })
 }
@@ -90,7 +159,6 @@ function scrape(jsonString) {
   const dataCacheFile = path.join(appPath, './tmp.json')
   fs.writeFileSync(dataCacheFile, jsonString, { encoding: 'utf-8' })
   const command = `${javSP} -i=${appPath} --only-fetch --data-cache-file=${dataCacheFile}`
-  fs.writeFileSync(path.join(appPath, './tmp.txt'), command, { encoding: 'utf-8' })
   exec(command, () => {
     // 读取缓存文件
     fs.readFile(dataCacheFile, { encoding: 'utf-8' }, (err, data) => {
@@ -105,9 +173,10 @@ function scrape(jsonString) {
  * 保存数据文件
  * @param {any[]} dataItems
  */
-function saveLibraryData(jsonString) {
+async function saveLibraryData(jsonString) {
   const dataCacheFile = path.join(appPath, './data.json')
-  return fs.writeFile(dataCacheFile, jsonString, { encoding: 'utf-8' })
+  fs.writeFileSync(dataCacheFile, jsonString, { encoding: 'utf-8' })
+  return true
 }
 
 async function md5(str) {
@@ -115,13 +184,29 @@ async function md5(str) {
   return hash
 }
 
+function laodNfo(p) {
+  const nfoData = fs.readFileSync(p, { encoding: 'utf-8' })
+  const data = xml2json.toJson(nfoData)
+  return new Promise((rs) => {
+    rs(data)
+  })
+}
+
+function editLibraryPath() {
+  return new Promise((rs) => {
+    win.webContents.send('edit-library-finish', '')
+    return rs(true)
+  })
+}
+
 async function createWindow() {
   win = new BrowserWindow({
     title: appName + ' ' + version,
-    minWidth: 800,
+    minWidth: 850,
     minHeight: 800,
     icon: path.join(__dirname, '../public/icon.png'),
     webPreferences: {
+      webSecurity: false,
       sandbox: false,
       preload: path.join(__dirname, './preload.mjs')
     }
@@ -139,17 +224,16 @@ async function createSettingWindow() {
     title: '设置',
     minWidth: 600,
     minHeight: 600,
-    icon: path.join(__dirname, '../public/icon.png'),
     webPreferences: {
       sandbox: false,
       preload: path.join(__dirname, './preload.mjs')
     }
   })
   if (!isPackaged) {
-    settingWin.loadURL('http://localhost:5173#/setting')
+    settingWin.loadURL('http://localhost:5173/setting.html')
     settingWin.webContents.openDevTools()
   } else {
-    settingWin.loadFile('dist/index.html#/setting')
+    settingWin.loadFile('dist/setting.html')
   }
 }
 
@@ -167,8 +251,11 @@ app.whenReady().then(() => {
   ipcMain.handle('exec:scan', async (_event, ...args) => {
     return scan(...args)
   })
-  ipcMain.handle('load-ini', async () => {
+  ipcMain.handle('load-ini', () => {
     return loadIni()
+  })
+  ipcMain.handle('save-ini', (_event, ...args) => {
+    return saveIni(...args)
   })
   ipcMain.handle('load-library-data', async () => {
     return loadLibraryData()
@@ -185,6 +272,12 @@ app.whenReady().then(() => {
     settingWin.on('close', () => {
       win.setEnabled(true)
     })
+  })
+  ipcMain.handle('load-nfo-data', (_event, ...args) => {
+    return laodNfo(...args)
+  })
+  ipcMain.handle('edit-library-path', async () => {
+    return editLibraryPath()
   })
 
   createWindow()

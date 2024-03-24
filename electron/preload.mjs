@@ -16,6 +16,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
       callback(...v)
     }),
   loadIni: () => ipcRenderer.invoke('load-ini'),
+  saveIni: (obj) => ipcRenderer.invoke('save-ini', obj),
   onLoadIniFinish: (callback) =>
     ipcRenderer.on('load-ini-finish', (_event, ...v) => {
       callback(...v)
@@ -31,5 +32,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
       callback(...v)
     }),
   saveLibraryData: (data) => ipcRenderer.invoke('save-library-data', data),
-  openSetting: () => ipcRenderer.invoke('app:open-setting')
+  openSetting: () => ipcRenderer.invoke('app:open-setting'),
+  LoadNfo: (data) => ipcRenderer.invoke('load-nfo-data', data),
+  editLibraryPath: () => ipcRenderer.invoke('edit-library-path'),
+  onEditLibraryPath: (callback) =>
+    ipcRenderer.on('edit-library-finish', () => {
+      callback()
+    })
 })

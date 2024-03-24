@@ -12,25 +12,42 @@ const app = useAppStore()
 const statusStore = useStatusStore()
 const libraryStore = useLibraryStore()
 
-libraryStore.loadLocalLibrary()
+window.electronAPI.onEditLibraryPath(() => {
+  console.log('reload app config')
+  app.reload()
+})
+
+libraryStore.loadLocalLibrary().then((rs) => {
+  statusStore.setResult(i18n.global.t('LoadLocalLibraryResult', { count: rs }))
+})
 /**
  * 更新媒体库
  */
 const updateLibraries = async () => {
   const pathes = app.libraryPath
   statusStore.setLoading()
+  statusStore.setResult('')
+  const t = pathes.length
+  const rsCount = { t: 0, w: 0, e: 0 }
   for (const idx in pathes) {
-    const i = parseInt(idx) + 1
-    statusStore.setCurrentOperation(i18n.global.t('UpdateMedia') + ` ${i}/${pathes.length}`)
     const p = pathes[idx]
-    await libraryStore.updateLibrary(p)
+    const i = parseInt(idx) + 1
+    const op = i18n.global.t('Scaning', { i, t, p })
+    statusStore.setCurrentOperation(op)
+    const rs: any = await libraryStore.updateLibrary(p)
+    rsCount.t += rs.t
+    rsCount.e += rs.e
+    rsCount.w += rs.w
   }
+  statusStore.setResult(i18n.global.t('ScanResult', rsCount))
   statusStore.reset()
 }
 
 const scrape = () => {
   statusStore.op(i18n.global.t('Scrape'))
-  libraryStore.scrape().then(() => {
+  statusStore.setResult(i18n.global.t('ScrapeWarning'))
+  libraryStore.scrape().then((rs: any) => {
+    statusStore.setResult(i18n.global.t('ScrapeFinish', rs))
     statusStore.op(i18n.global.t('OPSaveLibraryData'))
     libraryStore.saveLibraryData().then(() => {
       statusStore.reset()
@@ -46,11 +63,9 @@ const openSetting = () => {
 <template>
   <div
     class="common-layout"
-    style="height: 100%"
     v-loading="libraryStore.initLoading"
     :element-loading-text="$t('InitLoadingText')"
-  ></div>
-  <div class="common-layout" v-if="!libraryStore.initLoading">
+  >
     <el-container>
       <el-header>
         <div class="icon-buttons header-row">
@@ -73,13 +88,13 @@ const openSetting = () => {
                 :loading="statusStore.loading"
                 @buttonClick="scrape"
               />
-              <IconButton
+              <!-- <IconButton
                 class="icon-button"
                 :title="$t('RenameFiles')"
                 icon="Files"
                 color="#d3750d"
                 :loading="statusStore.loading"
-              />
+              /> -->
             </div>
           </div>
           <div style="width: 50%">
@@ -91,12 +106,12 @@ const openSetting = () => {
                 color="#20c4f9"
                 @buttonClick="openSetting"
               />
-              <IconButton
+              <!-- <IconButton
                 class="icon-button"
                 :title="$t('CheckUpdate')"
                 icon="Bottom"
                 color="#1fd00e"
-              />
+              /> -->
               <LanguageSwtich class="icon-button" />
             </div>
           </div>
@@ -107,11 +122,15 @@ const openSetting = () => {
       </el-main>
       <el-footer>
         <div class="icon-buttons" style="height: 100%">
-          <div></div>
-          <div style="display: flex; justify-content: end; align-items: center">
-            <div style="margin-right: 20px" v-if="statusStore.currentOperation">
-              {{ statusStore.currentOperation }}...
-            </div>
+          <el-text truncated style="width: 50%">{{ statusStore.result }}</el-text>
+          <div style="display: flex; justify-content: end; align-items: center; width: 50%">
+            <el-text
+              truncated
+              style="width: 70%; margin-right: 20px; text-align: right"
+              v-if="statusStore.currentOperation"
+            >
+              {{ statusStore.currentOperation }}
+            </el-text>
             <div class="loading" v-loading="statusStore.loading"></div>
           </div>
         </div>
@@ -147,14 +166,19 @@ const openSetting = () => {
 .el-main {
   margin: 0px;
   padding: 0px;
+  width: 100vw;
+  height: calc(100vh - 130px);
+  overflow: auto;
 }
 .el-footer {
   border-top: 1px solid #ccc;
   height: 30px;
+  width: 100vw;
+  overflow: auto;
 }
 
 .el-footer .loading {
-  --el-loading-spinner-size: 28px;
+  --el-loading-spinner-size: 20px;
   width: 28px;
   height: 28px;
 }
@@ -165,6 +189,6 @@ const openSetting = () => {
   align-items: center;
 }
 .icon-button {
-  margin-left: 10px;
+  margin-left: 20px;
 }
 </style>

@@ -3,8 +3,8 @@ import { ref } from 'vue'
 
 const props = defineProps(['title', 'icon', 'color', 'loading'])
 const emit = defineEmits(['buttonClick'])
-const defaultSize = 38
-const focusSize = 42
+const defaultSize = 32
+const focusSize = 38
 const iconSize = ref(defaultSize)
 
 const iconFocus = () => {
