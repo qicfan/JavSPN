@@ -24,8 +24,8 @@ git clone https://github.com/qicfan/JavSPN.git
 cd JavSPN
 npm install
 ```
-2.  自行下载最新版本的[JavSP](https://github.com/Yuukiy/JavSP/releases)，放入根目录下的resources/JavSP/目录下，确保resources/JavSP/JavSP.exe存在，其他平台同理
-3. release包已内涵对应版本的JavSP，无需手动下载
+2. 自行下载最新版本的[JavSP](https://github.com/Yuukiy/JavSP/releases)，放入根目录下的resources/JavSP/目录下，确保resources/JavSP/JavSP.exe存在，其他平台同理
+3. release包已内含对应版本的JavSP，无需手动下载
 
 ### 开发调试
 ```
@@ -39,6 +39,5 @@ npm run build
 
 ### 界面预览
 ![主界面](https://github.com/qicfan/JavSPN/assets/758655/de8f4e88-1d90-43f5-b030-f7c3ad987045)
-![详情](https://github.com/qicfan/JavSPN/assets/758655/0bb1864c-933a-4706-af94-c48c9f1578ec)
 ![设置](https://github.com/qicfan/JavSPN/assets/758655/ae3378ae-7196-4746-a298-c76f54222154)
 
