@@ -2,7 +2,7 @@
 # JavSPN
 基于[JavSP](https://github.com/Yuukiy/JavSP)的小姐姐刮削和媒体文件管理器，图形界面基于Electron
 
-##功能
+## 功能
 - [x] 多文件夹管理（可以手动区分有无码之类的）
 - [x] 影片扫描（汇总多文件夹数据），基于JavSP
 - [x] 刮削，基于JavSP
