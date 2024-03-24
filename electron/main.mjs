@@ -18,11 +18,13 @@ const javSPPath = path.join(appPath, './resources/JavSP')
 let win
 let settingWin
 let JavSPCommand = 'JavSP'
+let newLine = "\n"
 if (process.platform !== 'darwin') {
   Menu.setApplicationMenu(null)
 }
 if (process.platform == 'win32') {
   JavSPCommand = 'JavSP.exe'
+  newLine = "\r\n"
 }
 
 async function getVersion() {
@@ -48,7 +50,7 @@ async function handleFileOpen() {
 }
 
 function parseIni(iniString) {
-  const lines = iniString.split('\r\n')
+  const lines = iniString.split(newLine)
   const ini = {}
   let dictName = ''
   for (const idx in lines) {
@@ -80,7 +82,7 @@ function dumpIni(iniObject) {
       lines.push(`${key} = ${value}`)
     }
   }
-  return lines.join('\r\n')
+  return lines.join(newLine)
 }
 
 // 读取配置文件
@@ -225,6 +227,7 @@ async function createWindow() {
 
 async function createSettingWindow() {
   settingWin = new BrowserWindow({
+    parent: win,
     title: '设置',
     minWidth: 600,
     minHeight: 600,
@@ -240,6 +243,7 @@ async function createSettingWindow() {
   } else {
     settingWin.loadFile('dist/setting.html')
   }
+  return settingWin
 }
 
 // 这段程序将会在 Electron 结束初始化
@@ -273,7 +277,8 @@ app.whenReady().then(() => {
   })
   ipcMain.handle('app:open-setting', async () => {
     await createSettingWindow()
-    win.setEnabled(false)
+    // win.setEnabled(false)
+    // settingWin.show()
     settingWin.on('close', () => {
       win.setEnabled(true)
     })
