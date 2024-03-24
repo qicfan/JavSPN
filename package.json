@@ -39,6 +39,7 @@
     "@vue/tsconfig": "^0.5.1",
     "concurrently": "^8.2.2",
     "electron": "^29.1.1",
+    "electron-rebuild": "^3.2.9",
     "electron-builder": "^24.13.3",
     "eslint": "^8.49.0",
     "eslint-plugin-vue": "^9.17.0",
@@ -69,6 +70,7 @@
       "target": [
         "dmg"
       ],
+      "icon": "public/icon.png",
       "artifactName": "${productName}-Mac-${version}-Installer.${ext}"
     },
     "win": {

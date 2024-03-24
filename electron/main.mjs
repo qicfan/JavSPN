@@ -17,8 +17,12 @@ const appPath = isPackaged ? process.cwd() : app.getAppPath()
 const javSPPath = path.join(appPath, './resources/JavSP')
 let win
 let settingWin
+let JavSPCommand = 'JavSP'
 if (process.platform !== 'darwin') {
   Menu.setApplicationMenu(null)
+}
+if (process.platform == 'win32') {
+  JavSPCommand = 'JavSP.exe'
 }
 
 async function getVersion() {
@@ -129,7 +133,7 @@ function checkFile(filename, suffix, name) {
 }
 
 function scan(libraryPath) {
-  const javSP = path.join(javSPPath, './JavSP.exe')
+  const javSP = path.join(javSPPath, './' + JavSPCommand)
   const dataCacheFile = path.join(appPath, './tmp.json')
   const command = `${javSP} -i=${libraryPath} --only-scan --data-cache-file=${dataCacheFile}`
   exec(command, () => {
@@ -155,7 +159,7 @@ function scan(libraryPath) {
  * @param {any[]} data
  */
 function scrape(jsonString) {
-  const javSP = path.join(javSPPath, './JavSP.exe')
+  const javSP = path.join(javSPPath, './' + JavSPCommand)
   const dataCacheFile = path.join(appPath, './tmp.json')
   fs.writeFileSync(dataCacheFile, jsonString, { encoding: 'utf-8' })
   const command = `${javSP} -i=${appPath} --only-fetch --data-cache-file=${dataCacheFile}`
