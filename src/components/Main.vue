@@ -29,7 +29,7 @@ const libraryStore = useLibraryStore()
       {{ $t('FirstChooseLibraryPath') }} {{ $t('UpdateMedia') }} {{ $t('Button') }}
     </p>
     <p style="width: 100%; text-align: center" v-if="!app.libraryPath.length">
-      <el-button type="primary" @click="app.chooseDirectory(true)">{{
+      <el-button type="primary" @click="app.chooseDirectory()">{{
         $t('ChooseDirectory')
       }}</el-button>
     </p>
