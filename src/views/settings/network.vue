@@ -20,9 +20,14 @@ const onSubmit = () => {
     timeout: form.timeout
   }
   settingStore.settings.Network = network
-  settingStore.saveInit().then(() => {
-    ElMessage.success(i18n.global.t('SaveSuccess'))
-  })
+  settingStore.saveInit().then(
+    () => {
+      ElMessage.success(i18n.global.t('SaveSuccess'))
+    },
+    (err) => {
+      ElMessage.error(err)
+    }
+  )
 }
 </script>
 

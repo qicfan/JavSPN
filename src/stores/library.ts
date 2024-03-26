@@ -1,6 +1,7 @@
 import { ref } from 'vue'
 
 import { defineStore } from 'pinia'
+import { API, RESULT_CODE, NO_CODE } from '@/func'
 
 export const useLibraryStore = defineStore('library', () => {
   const libraryListIds = ref(<string[]>[])
@@ -17,18 +18,6 @@ export const useLibraryStore = defineStore('library', () => {
     }
   }
 
-  const genId = async (dataItem: DataItem | Movie | any) => {
-    let nameList: string[] = []
-    if (dataItem.code) {
-      nameList = [dataItem.code].concat(dataItem.files)
-    }
-    if (dataItem.dvdid) {
-      nameList = [dataItem.dvdid].concat(dataItem.files)
-    }
-    const nameString = nameList.join('')
-    return window.electronAPI.md5(nameString)
-  }
-
   const baseName = (url: string) => {
     const userAgent = window.navigator.userAgent
     const isWindows = /Windows/.test(userAgent)
@@ -40,29 +29,9 @@ export const useLibraryStore = defineStore('library', () => {
     return urlMap[urlMap.length - 1]
   }
 
-  const delArrayItem = (array: any[], item: any) => {
-    const idx = array.indexOf(item)
-    if (idx > -1) {
-      array.splice(idx, 1)
-    }
-    return array
-  }
-
-  const loadLocalLibrary = () => {
-    return new Promise((rs) => {
-      if (libraryListIds.value.length > 0) return rs(0)
-      window.electronAPI.onLoadLibraryDataFinish(async (data: any[]) => {
-        if (!data.length) return (initLoading.value = false)
-        for (const idx in data) {
-          const item = data[idx]
-          const id = item.id
-          libraryListIds.value.unshift(id)
-          libraryData.value[id] = item
-        }
-        initLoading.value = false
-        rs(libraryListIds.value.length)
-      })
-      window.electronAPI.loadLibraryData()
+  const resetScrapItems = (scrapeItems: Movie[]) => {
+    scrapeItems.forEach((item: Movie) => {
+      libraryData.value[item.guid].loading = false
     })
   }
 
@@ -101,29 +70,30 @@ export const useLibraryStore = defineStore('library', () => {
     }
   }
 
-  const updateLibrary = (p: string) => {
-    return new Promise((resolve) => {
-      window.electronAPI.onScanFinish(async (data: any) => {
-        if (!data.length) resolve({ t: 0, w: 0, e: 0 })
-        let w = 0
-        let e = 0
-        for (const idx in data) {
-          const item: Movie = data[idx]
-          const id = await genId(item)
-          if (libraryListIds.value.includes(id) || ignores.value.includes(id)) continue
-          libraryListIds.value.unshift(id)
-          libraryData.value[id] = movieToDataItem(item, id)
-          if (libraryData.value[id].code == '无法识别番号') {
-            e++
-          } else if (!libraryData.value[id].nfo) {
-            w++
-          }
-        }
-        const t = data.length
-        resolve({ t, w, e })
-      })
-      window.electronAPI.scan(p)
-    })
+  const genId = async (dataItem: DataItem | Movie | any) => {
+    let nameList: string[] = []
+    if (dataItem.code) {
+      nameList = [dataItem.code].concat(dataItem.files)
+    }
+    if (dataItem.dvdid) {
+      nameList = [dataItem.dvdid].concat(dataItem.files)
+    } else {
+      nameList.push(dataItem)
+    }
+    const nameString = nameList.join('')
+    const hash = await API.md5(nameString)
+    if (hash.errCode == RESULT_CODE.OK) {
+      return hash.data
+    }
+    return ''
+  }
+
+  const delArrayItem = (array: any[], item: any) => {
+    const idx = array.indexOf(item)
+    if (idx > -1) {
+      array.splice(idx, 1)
+    }
+    return array
   }
 
   /**
@@ -147,8 +117,33 @@ export const useLibraryStore = defineStore('library', () => {
     libraryData.value[id].code = code
   }
 
+  const loadLocalLibrary = () => {
+    return new Promise((resolve, reject) => {
+      API.loadLibraryData().then((result) => {
+        initLoading.value = false
+        if (result.errCode == RESULT_CODE.ERROR) {
+          // 读取文件数据失败，返回错误信息
+          return reject(result.errMsg)
+        }
+        if (result.errCode == RESULT_CODE.NOT_FOUND) {
+          // 不存在数据文件，直接返回0
+          return resolve(0)
+        }
+        const data = JSON.parse(result.data)
+        if (!data.length) return (initLoading.value = false)
+        for (const idx in data) {
+          const item = data[idx]
+          const id = item.id
+          libraryListIds.value.unshift(id)
+          libraryData.value[id] = item
+        }
+        return resolve(libraryListIds.value.length)
+      })
+    })
+  }
+
   const saveLibraryData = () => {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       const storeItems: DataItem[] = []
       for (const idx in libraryListIds.value) {
         const id = libraryListIds.value[idx]
@@ -156,14 +151,42 @@ export const useLibraryStore = defineStore('library', () => {
         if (need) return
         storeItems.push(libraryData.value[id])
       }
-      window.electronAPI.saveLibraryData(JSON.stringify(storeItems))
-      resolve(true)
+      API.saveLibraryData(JSON.stringify(storeItems)).then((result) => {
+        if (result.errCode == RESULT_CODE.OK) return resolve(true)
+        return reject(result.errMsg)
+      })
     })
   }
 
-  const resetScrapItems = (scrapeItems: Movie[]) => {
-    scrapeItems.forEach((item: Movie) => {
-      libraryData.value[item.guid].loading = false
+  const updateLibrary = (p: string) => {
+    return new Promise((resolve, reject) => {
+      API.scan(p).then(async (result) => {
+        if (result.errCode == RESULT_CODE.NOT_FOUND) {
+          // 没有数据
+          return resolve({ t: 0, w: 0, e: 0 })
+        }
+        if (result.errCode == RESULT_CODE.ERROR) {
+          // 有错误
+          return reject(result.errMsg)
+        }
+        let w = 0
+        let e = 0
+        const data = JSON.parse(result.data)
+        for (const idx in data) {
+          const item: Movie = data[idx]
+          const id = await genId(item)
+          if (libraryListIds.value.includes(id) || ignores.value.includes(id)) continue
+          libraryListIds.value.unshift(id)
+          libraryData.value[id] = movieToDataItem(item, id)
+          if (libraryData.value[id].code == NO_CODE) {
+            e++
+          } else if (!libraryData.value[id].nfo) {
+            w++
+          }
+        }
+        const t = data.length
+        resolve({ t, w, e })
+      })
     })
   }
 
@@ -177,7 +200,7 @@ export const useLibraryStore = defineStore('library', () => {
    * 6. 持久化
    */
   const scrape = () => {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       const scrapeItems: Movie[] = []
       libraryListIds.value.forEach((id: string) => {
         const need =
@@ -192,8 +215,16 @@ export const useLibraryStore = defineStore('library', () => {
       if (!t) {
         return resolve({ t: 0, f: 0 })
       }
-      window.electronAPI.onSrapeFinish((data: string) => {
-        console.log('scrape-finish call ok:', data)
+      API.scrape(JSON.stringify(scrapeItems)).then((result) => {
+        if (result.errCode == RESULT_CODE.NOT_FOUND) {
+          // 没有数据
+          return resolve({ t: 0, f: 0 })
+        }
+        if (result.errCode == RESULT_CODE.ERROR) {
+          // 有错误
+          return reject(result.errMsg)
+        }
+        const data = JSON.parse(result.data)
         if (!data) {
           resetScrapItems(scrapeItems)
           resolve({ t, f: scrapeItems.length })
@@ -221,9 +252,8 @@ export const useLibraryStore = defineStore('library', () => {
           }
         })
         resetScrapItems(scrapeItems)
-        resolve({ t, f: scrapeItems.length })
+        return resolve({ t, f: scrapeItems.length })
       })
-      window.electronAPI.scrape(JSON.stringify(scrapeItems))
     })
   }
 
@@ -236,6 +266,7 @@ export const useLibraryStore = defineStore('library', () => {
     updateLibrary,
     saveCode,
     scrape,
-    saveLibraryData
+    saveLibraryData,
+    genId
   }
 })

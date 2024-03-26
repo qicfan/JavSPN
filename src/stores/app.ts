@@ -2,6 +2,7 @@ import { ref } from 'vue'
 
 import { defineStore } from 'pinia'
 import { i18n, setI18nLanguage } from '@/i18n'
+import { API } from '@/func'
 
 export const useAppStore = defineStore('app', () => {
   const language = ref('zh-cn')
@@ -27,14 +28,21 @@ export const useAppStore = defineStore('app', () => {
   }
 
   const chooseDirectory = () => {
-    window.electronAPI.openDirectory().then((p: string) => {
-      if (!libraryPath.value.length) {
-        libraryPath.value = [p]
-      } else {
-        libraryPath.value.push(p)
-      }
-      window.electronAPI.editLibraryPath()
-      store()
+    return new Promise((resolve) => {
+      API.openDirectory().then((result) => {
+        if (result.data == '') return resolve(1)
+        const p = result.data
+        if (!libraryPath.value.length) {
+          libraryPath.value = [p]
+        } else {
+          libraryPath.value.push(p)
+        }
+        // 持久化
+        store()
+        // 通知主进程：媒体库路径有变化，主进程会通知其他子窗口进行更新
+        API.editLibraryPath()
+        return resolve(1)
+      })
     })
   }
 

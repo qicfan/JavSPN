@@ -1,11 +1,12 @@
 <script setup lang="ts">
+import { API } from '@/func'
 import { useAppStore } from '../../stores/app'
 
 const app = useAppStore()
 
 const del = (p: string) => {
   app.delLibraryPath(p)
-  window.electronAPI.editLibraryPath()
+  API.editLibraryPath()
 }
 </script>
 

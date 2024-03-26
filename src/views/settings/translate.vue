@@ -26,9 +26,14 @@ const onSubmit = () => {
     translate_plot: form.translate_plot ? 'yes' : 'no'
   }
   settingStore.settings.Translate = d
-  settingStore.saveInit().then(() => {
-    ElMessage.success(i18n.global.t('SaveSuccess'))
-  })
+  settingStore.saveInit().then(
+    () => {
+      ElMessage.success(i18n.global.t('SaveSuccess'))
+    },
+    (err) => {
+      ElMessage.error(err)
+    }
+  )
 }
 </script>
 

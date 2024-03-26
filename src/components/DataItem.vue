@@ -1,6 +1,10 @@
 <script setup lang="ts">
-import { ref, type Ref } from 'vue'
+import { ref } from 'vue'
 import { useLibraryStore } from '../stores/library'
+import { API, RESULT_CODE } from '@/func'
+import { ElMessage } from 'element-plus'
+import { i18n } from '@/i18n'
+import { NO_CODE } from '@/func'
 
 const props = defineProps(['data'])
 
@@ -9,7 +13,7 @@ const libraryStore = useLibraryStore()
 const editing = ref(false)
 const code = ref('')
 const isOk = ref(!!props.data.nfo)
-const needEditCode = ref(props.data.code == '无法识别番号')
+const needEditCode = ref(props.data.code == NO_CODE)
 const showDetail = ref(false)
 const detailLoading = ref(false)
 const defaultNfo: MovieNfo = {
@@ -51,17 +55,25 @@ const saveCode = () => {
   editing.value = false
 }
 
-const detail = async () => {
+const detail = () => {
   showDetail.value = true
   // 加载nfo数据，如果已经刮削过的话
   if (!isOk.value) return
   detailLoading.value = true
-  const nfoJsonString = await window.electronAPI.LoadNfo(props.data.nfo)
-  const nfo: { movie: MovieNfo } = JSON.parse(nfoJsonString)
-  nfoData.value = nfo.movie
-  rate.value = (parseFloat(nfo.movie.rating) / 10) * 5
-  detailLoading.value = false
-  return
+
+  API.LoadNfo(props.data.nfo).then((result) => {
+    if (result.errCode == RESULT_CODE.ERROR) {
+      return ElMessage.error(result.errMsg)
+    }
+    if (result.errCode == RESULT_CODE.NOT_FOUND) {
+      return ElMessage.error(i18n.global.t('NfoNotFound', props.data.nfo))
+    }
+    const nfo: { movie: MovieNfo } = JSON.parse(result.data)
+    nfoData.value = nfo.movie
+    rate.value = (parseFloat(nfo.movie.rating) / 10) * 5
+    detailLoading.value = false
+    return
+  })
 }
 </script>
 <style scoped>
@@ -102,7 +114,7 @@ const detail = async () => {
     <template #header>
       <div class="card-header">
         <el-link size="large" tag="b" v-if="!editing" @click.stop="click"
-          >{{ data.code == '无法识别番号' ? $t('NoCode') : data.code }}
+          >{{ data.code == NO_CODE ? $t('NoCode') : data.code }}
           <el-icon color="red" class="el-icon--right" v-if="needEditCode"><Edit /></el-icon>
           <el-icon class="el-icon--right" v-if="!needEditCode"><View /></el-icon>
         </el-link>

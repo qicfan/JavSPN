@@ -25,10 +25,14 @@ const onSubmit = () => {
     enable_file_move: 'no'
   }
   settingStore.settings.File = d
-  settingStore.saveInit().then((r: any) => {
-    ElMessage.success(i18n.global.t('SaveSuccess'))
-    console.log(r)
-  })
+  settingStore.saveInit().then(
+    () => {
+      ElMessage.success(i18n.global.t('SaveSuccess'))
+    },
+    (err) => {
+      ElMessage.error(err)
+    }
+  )
 }
 
 const delExt = (ext: string) => {

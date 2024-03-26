@@ -1,25 +1,22 @@
 type scanCallback = (value: any) => void
+type resultObj = { data: string; errCode: number; errMsg: string }
 interface Window {
   electronAPI: {
-    gersion()
-    gname()
-    gpath()
-    md5(str: string)
-    openDirectory()
-    scan(string)
-    onScanFinish(callback: scanCallback)
-    loadIni()
-    saveIni(obj: any)
-    onLoadIniFinish(callback: scanCallback)
-    loadLibraryData()
-    onLoadLibraryDataFinish(callback: scanCallback)
-    scrape(movies: string)
-    onSrapeFinish(callback: scanCallback)
-    saveLibraryData(items: string)
-    openSetting()
-    LoadNfo(path: string)
-    editLibraryPath()
-    onEditLibraryPath(callback: scanCallback)
+    gersion(): Promise<resultObj>
+    gname(): Promise<resultObj>
+    gpath(): Promise<resultObj>
+    md5(str: string): Promise<resultObj>
+    openDirectory(): Promise<resultObj>
+    loadIni(): Promise<resultObj>
+    saveIni(obj: any): Promise<resultObj>
+    loadLibraryData(): Promise<resultObj>
+    saveLibraryData(items: string): Promise<resultObj>
+    scan(p: string): Promise<resultObj>
+    scrape(movies: string): Promise<resultObj>
+    openSetting(): Promise<resultObj>
+    LoadNfo(path: string): Promise<resultObj>
+    editLibraryPath(): void
+    onEditLibraryPath(callback: scanCallback): void
   }
 }
 

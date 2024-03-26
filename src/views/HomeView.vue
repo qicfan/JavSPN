@@ -7,18 +7,18 @@ import { useAppStore } from '../stores/app'
 import { useLibraryStore } from '../stores/library'
 import { i18n } from '../i18n'
 import logo from '../assets/icon.png'
+import { API } from '@/func'
 
 const app = useAppStore()
 const statusStore = useStatusStore()
 const libraryStore = useLibraryStore()
 
-window.electronAPI.onEditLibraryPath(() => {
-  console.log('reload app config')
+API.onEditLibraryPath(() => {
   app.reload()
 })
 
-libraryStore.loadLocalLibrary().then((rs) => {
-  statusStore.setResult(i18n.global.t('LoadLocalLibraryResult', { count: rs }))
+libraryStore.loadLocalLibrary().then((count) => {
+  statusStore.setResult(i18n.global.t('LoadLocalLibraryResult', { count }))
 })
 /**
  * 更新媒体库
@@ -34,10 +34,17 @@ const updateLibraries = async () => {
     const i = parseInt(idx) + 1
     const op = i18n.global.t('Scaning', { i, t, p })
     statusStore.setCurrentOperation(op)
-    const rs: any = await libraryStore.updateLibrary(p)
-    rsCount.t += rs.t
-    rsCount.e += rs.e
-    rsCount.w += rs.w
+    libraryStore.updateLibrary(p).then(
+      (rs: any) => {
+        rsCount.t += rs.t
+        rsCount.e += rs.e
+        rsCount.w += rs.w
+      },
+      (err) => {
+        // 有错误，提示
+        statusStore.setResult(err)
+      }
+    )
   }
   statusStore.setResult(i18n.global.t('ScanResult', rsCount))
   statusStore.reset()
@@ -46,17 +53,29 @@ const updateLibraries = async () => {
 const scrape = () => {
   statusStore.op(i18n.global.t('Scrape'))
   statusStore.setResult(i18n.global.t('ScrapeWarning'))
-  libraryStore.scrape().then((rs: any) => {
-    statusStore.setResult(i18n.global.t('ScrapeFinish', rs))
-    statusStore.op(i18n.global.t('OPSaveLibraryData'))
-    libraryStore.saveLibraryData().then(() => {
-      statusStore.reset()
-    })
-  })
+  libraryStore.scrape().then(
+    (rs: any) => {
+      statusStore.setResult(i18n.global.t('ScrapeFinish', rs))
+      statusStore.op(i18n.global.t('OPSaveLibraryData'))
+      libraryStore.saveLibraryData().then(
+        () => {
+          statusStore.reset()
+        },
+        (err) => {
+          // 有错误，提示
+          statusStore.setResult(err)
+        }
+      )
+    },
+    (err) => {
+      // 有错误，提示
+      statusStore.setResult(err)
+    }
+  )
 }
 
 const openSetting = () => {
-  window.electronAPI.openSetting()
+  API.openSetting()
 }
 </script>
 
@@ -162,6 +181,7 @@ const openSetting = () => {
 .icon-button {
   text-align: center;
   cursor: pointer;
+  min-width: 60px;
 }
 .el-main {
   margin: 0px;
