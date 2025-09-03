@@ -1,3 +1,5 @@
+# 项目停止且归档
+
 ![icon](https://github.com/qicfan/JavSPN/assets/758655/2deb77c7-c3ac-4745-9f2b-05ae5fca581f)
 # JavSPN
 基于[JavSP](https://github.com/Yuukiy/JavSP)的小姐姐刮削和媒体文件管理器，图形界面基于Electron
